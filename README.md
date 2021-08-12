@@ -111,7 +111,7 @@ Create a new file: `/Users/<username>/vault.json`
 }
 ```
 
-### Robocorp Cloud vault
+### Control Room vault
 
 Create a new secret using `aws` as the name. Add the `AWS_KEY_ID` and `AWS_KEY` key-value pairs.
 
