@@ -106,7 +106,7 @@ Create a new file: `/Users/<username>/vault.json`
 
 ```json
 {
-  "RPA_SECRET_MANAGER": "RPA.Robocloud.Secrets.FileSecrets",
+  "RPA_SECRET_MANAGER": "RPA.Robocorp.Vault.FileSecrets",
   "RPA_SECRET_FILE": "/Users/<username>/vault.json"
 }
 ```
