@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation     IMDB review sentiment robot.
-Library           Browser    jsextension=${CURDIR}${/}keywords.js
+Library           Browser
+...               jsextension=${CURDIR}${/}keywords.js
+...               strict=False
 Library           Collections
 Library           RPA.Cloud.AWS    robocloud_vault_name=aws
 Library           RPA.Tables
