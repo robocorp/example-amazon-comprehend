@@ -11,7 +11,7 @@ Library           RPA.Tables
 ${AWS_REGION}=    us-east-2
 ${MOVIE}=         RoboCop
 ${REVIEW_MAX_LENGTH}=    ${2000}
-${SENTIMENTS_FILE_PATH}=    ${CURDIR}${/}output${/}imdb-sentiments-${MOVIE}.csv
+${SENTIMENTS_FILE_PATH}=    ${OUTPUT_DIR}${/}imdb-sentiments-${MOVIE}.csv
 
 *** Keywords ***
 Open IMDB
@@ -31,7 +31,7 @@ Scroll page
 Get reviews
     Click    text=USER REVIEWS
     ${review_locator}=    Set Variable    css=.review-container .text
-    Wait For Elements State    ${review_locator}    visible
+    Wait For Elements State    ${review_locator}
     Scroll page
     @{reviews}=    getTexts    ${review_locator}
     [Return]    ${reviews}
@@ -41,7 +41,9 @@ Analyze sentiments
     Init Comprehend Client    use_robocloud_vault=True    region=${AWS_REGION}
     @{sentiments}=    Create List
     FOR    ${review}    IN    @{reviews}
-        ${sentiment_score}=    Comprehend sentiment    ${review}[:${REVIEW_MAX_LENGTH}]
+        ${sentiment_score}=
+        ...    Comprehend sentiment
+        ...    ${review}[:${REVIEW_MAX_LENGTH}]
         &{sentiment}=    Create Dictionary
         ...    review=${review}
         ...    sentiment=${sentiment_score}
