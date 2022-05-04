@@ -1,17 +1,30 @@
 *** Settings ***
-Documentation     IMDB review sentiment robot.
-Library           Browser
-...               jsextension=${CURDIR}${/}keywords.js
-...               strict=False
-Library           Collections
-Library           RPA.Cloud.AWS    robocloud_vault_name=aws
-Library           RPA.Tables
+Documentation       IMDB review sentiment robot.
+
+Library             Browser
+...                 jsextension=${CURDIR}${/}keywords.js
+...                 strict=False
+Library             Collections
+Library             RPA.Cloud.AWS    robocloud_vault_name=aws
+Library             RPA.Tables
+
 
 *** Variables ***
-${AWS_REGION}=    us-east-2
-${MOVIE}=         RoboCop
-${REVIEW_MAX_LENGTH}=    ${2000}
+${AWS_REGION}=              us-east-2
+${MOVIE}=                   RoboCop
+${REVIEW_MAX_LENGTH}=       ${2000}
 ${SENTIMENTS_FILE_PATH}=    ${OUTPUT_DIR}${/}imdb-sentiments-${MOVIE}.csv
+
+
+*** Tasks ***
+Analyze IMDB movie review sentiments
+    Open IMDB
+    Search for movie    ${MOVIE}
+    @{reviews}=    Get reviews
+    @{sentiments}=    Analyze sentiments    ${reviews}
+    ${table}=    Create Table    ${sentiments}
+    Write Table To Csv    ${table}    ${SENTIMENTS_FILE_PATH}
+
 
 *** Keywords ***
 Open IMDB
@@ -34,7 +47,7 @@ Get reviews
     Wait For Elements State    ${review_locator}
     Scroll page
     @{reviews}=    getTexts    ${review_locator}
-    [Return]    ${reviews}
+    RETURN    ${reviews}
 
 Analyze sentiments
     [Arguments]    ${reviews}
@@ -49,7 +62,7 @@ Analyze sentiments
         ...    sentiment=${sentiment_score}
         Append To List    ${sentiments}    ${sentiment}
     END
-    [Return]    ${sentiments}
+    RETURN    ${sentiments}
 
 Comprehend sentiment
     [Arguments]    ${text}
@@ -58,13 +71,4 @@ Comprehend sentiment
     ...    "${sentiment["Sentiment"]}" == "NEGATIVE"
     ...    ${-1}
     ...    ${1}
-    [Return]    ${sentiment_score}
-
-*** Tasks ***
-Analyze IMDB movie review sentiments
-    Open IMDB
-    Search for movie    ${MOVIE}
-    @{reviews}=    Get reviews
-    @{sentiments}=    Analyze sentiments    ${reviews}
-    ${table}=    Create Table    ${sentiments}
-    Write Table To Csv    ${table}    ${SENTIMENTS_FILE_PATH}
+    RETURN    ${sentiment_score}
