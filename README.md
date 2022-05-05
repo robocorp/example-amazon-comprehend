@@ -10,17 +10,32 @@ The robot navigates to [IMDB](https://www.imdb.com/), finds the [RoboCop movie](
 
 ```robot
 *** Settings ***
-Documentation     IMDB review sentiment robot.
-Library           Browser    jsextension=${CURDIR}${/}keywords.js
-Library           Collections
-Library           RPA.Cloud.AWS    robocloud_vault_name=aws
-Library           RPA.Tables
+Documentation       IMDB review sentiment robot.
+
+Library             Browser
+...                 jsextension=${CURDIR}${/}keywords.js
+...                 strict=False
+Library             Collections
+Library             RPA.Cloud.AWS    robocloud_vault_name=aws
+Library             RPA.Tables
+
 
 *** Variables ***
-${AWS_REGION}=    us-east-2
-${MOVIE}=         RoboCop
-${REVIEW_MAX_LENGTH}=    ${2000}
-${SENTIMENTS_FILE_PATH}=    ${CURDIR}${/}output${/}imdb-sentiments-${MOVIE}.csv
+${AWS_REGION}=              us-east-2
+${MOVIE}=                   RoboCop
+${REVIEW_MAX_LENGTH}=       ${2000}
+${SENTIMENTS_FILE_PATH}=    ${OUTPUT_DIR}${/}imdb-sentiments-${MOVIE}.csv
+
+
+*** Tasks ***
+Analyze IMDB movie review sentiments
+    Open IMDB
+    Search for movie    ${MOVIE}
+    @{reviews}=    Get reviews
+    @{sentiments}=    Analyze sentiments    ${reviews}
+    ${table}=    Create Table    ${sentiments}
+    Write Table To Csv    ${table}    ${SENTIMENTS_FILE_PATH}
+
 
 *** Keywords ***
 Open IMDB
@@ -40,23 +55,25 @@ Scroll page
 Get reviews
     Click    text=USER REVIEWS
     ${review_locator}=    Set Variable    css=.review-container .text
-    Wait For Elements State    ${review_locator}    visible
+    Wait For Elements State    ${review_locator}
     Scroll page
     @{reviews}=    getTexts    ${review_locator}
-    [Return]    ${reviews}
+    RETURN    ${reviews}
 
 Analyze sentiments
     [Arguments]    ${reviews}
     Init Comprehend Client    use_robocloud_vault=True    region=${AWS_REGION}
     @{sentiments}=    Create List
     FOR    ${review}    IN    @{reviews}
-        ${sentiment_score}=    Comprehend sentiment    ${review}[:${REVIEW_MAX_LENGTH}]
+        ${sentiment_score}=
+        ...    Comprehend sentiment
+        ...    ${review}[:${REVIEW_MAX_LENGTH}]
         &{sentiment}=    Create Dictionary
         ...    review=${review}
         ...    sentiment=${sentiment_score}
         Append To List    ${sentiments}    ${sentiment}
     END
-    [Return]    ${sentiments}
+    RETURN    ${sentiments}
 
 Comprehend sentiment
     [Arguments]    ${text}
@@ -65,16 +82,7 @@ Comprehend sentiment
     ...    "${sentiment["Sentiment"]}" == "NEGATIVE"
     ...    ${-1}
     ...    ${1}
-    [Return]    ${sentiment_score}
-
-*** Tasks ***
-Analyze IMDB movie review sentiments
-    Open IMDB
-    Search for movie    ${MOVIE}
-    @{reviews}=    Get reviews
-    @{sentiments}=    Analyze sentiments    ${reviews}
-    ${table}=    Create Table    ${sentiments}
-    Write Table To Csv    ${table}    ${SENTIMENTS_FILE_PATH}
+    RETURN    ${sentiment_score}
 ```
 
 The [`RPA.Cloud.AWS`](https://robocorp.com/docs/libraries/rpa-framework/rpa-cloud-aws) library handles the communications with Amazon Comprehend.
